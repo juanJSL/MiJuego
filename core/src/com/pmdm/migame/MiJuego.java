@@ -12,9 +12,13 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TiledMapRenderer;
+import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
+
+import static com.badlogic.gdx.math.MathUtils.clamp;
 
 public class MiJuego extends ApplicationAdapter implements InputProcessor {
     //Objeto para el mapa
@@ -47,6 +51,20 @@ public class MiJuego extends ApplicationAdapter implements InputProcessor {
     private float stateTime;
     // Contendrá el frame que se va a mostrar en cada momento.
     private TextureRegion cuadroActual;
+
+
+
+    // Tamaño del mapa de baldosas.
+    private int anchoMapa, altoMapa;
+    //Atributos que indican la anchura y la altura de un tile del mapa de baldosas
+    int anchoCelda,altoCelda;
+
+
+
+
+    //Obstaculos
+    private boolean [][] obstaculo;
+    TiledMapTileLayer capaObstaculos;
 
     @Override
     public void create() {
@@ -101,6 +119,36 @@ public class MiJuego extends ApplicationAdapter implements InputProcessor {
         mapaRenderer = new OrthogonalTiledMapRenderer(mapa);
 
 
+
+
+        //Determinamos el alto y ancho del mapa de baldosas. Para ello necesitamos extraer la capa
+        //base del mapa y, a partir de ella, determinamos el número de celdas a lo ancho y alto,
+        //así como el tamaño de la celda, que multiplicando por el número de celdas a lo alto y
+        //ancho, da como resultado el alto y ancho en pixeles del mapa.
+        TiledMapTileLayer capa = (TiledMapTileLayer) mapa.getLayers().get(0);
+        anchoCelda = (int) capa.getTileWidth();
+        altoCelda = (int) capa.getTileHeight();
+        anchoMapa = capa.getWidth() * anchoCelda;
+        altoMapa = capa.getHeight() * altoCelda;
+
+
+
+
+
+        /*
+        OBSTACULOS
+         */
+
+        capaObstaculos = (TiledMapTileLayer) mapa.getLayers().get(2);//Cargamos la matriz de los obstáculos del mapa de baldosas.
+        int anchoCapa = capaObstaculos.getWidth(), altoCapa = capaObstaculos.getHeight();
+        obstaculo = new boolean[altoCapa][anchoCapa];
+        for (int x = 0; x < anchoCapa; x++) {
+            for (int y = 0; y < altoCapa; y++) {
+                obstaculo[x][y] = (capaObstaculos.getCell(x, y) != null);
+            }
+        }
+
+
     }
 /*
     @Override
@@ -144,6 +192,32 @@ public class MiJuego extends ApplicationAdapter implements InputProcessor {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         //Trasladamos la cámara para que se centre en el mosquetero.
         camara.position.set(jugadorX,jugadorY,0f);
+
+
+
+        /*
+        SIGUIENDO AL JUGADOR II
+         */
+
+        //Trasladamos la cámara para que se centre en el mosquetero.
+        camara.position.set(jugadorX, jugadorY, 0f);
+        //Comprobamos que la cámara no se salga de los límites del mapa de baldosas,
+        //Verificamos, con el método clamp(), que el valor de la posición x de la cámara
+        //esté entre la mitad de la anchura de la vista de la cámara y entre la diferencia entre
+        //la anchura del mapa restando la mitad de la anchura de la vista de la cámara,
+        camara.position.x = MathUtils.clamp(camara.position.x, camara.viewportWidth/2f, anchoMapa - camara.viewportWidth/2f);
+        //Verificamos, con el método clamp(), que el valor de la posición y de la cámara
+        //esté entre la mitad de la altura de la vista de la cámara y entre la diferencia entre
+        //la altura del mapa restando la mitad de la altura de la vista de la cámara,
+        camara.position.y = clamp(camara.position.y, camara.viewportHeight / 2f,altoMapa - camara.viewportHeight / 2f);
+
+
+
+
+
+
+
+
         //Actualizamos la cámara del juego
         camara.update();
         //Vinculamos el objeto de dibuja el TiledMap con la cámara del juego
