@@ -18,6 +18,8 @@ import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
 
+import java.awt.Button;
+
 import static com.badlogic.gdx.math.MathUtils.clamp;
 
 public class MiJuego extends ApplicationAdapter implements InputProcessor {
@@ -65,6 +67,11 @@ public class MiJuego extends ApplicationAdapter implements InputProcessor {
     //Obstaculos
     private boolean [][] obstaculo;
     TiledMapTileLayer capaObstaculos;
+
+
+
+    //Atributos que indican la anchura y altura del sprite animado del jugador.
+    int anchoJugador, altoJugador;
 
     @Override
     public void create() {
@@ -147,6 +154,12 @@ public class MiJuego extends ApplicationAdapter implements InputProcessor {
                 obstaculo[x][y] = (capaObstaculos.getCell(x, y) != null);
             }
         }
+
+
+        //Cargamos en los atributos del ancho y alto del sprite sus valores
+        cuadroActual = (TextureRegion) jugador.getKeyFrame(stateTime);
+        anchoJugador = cuadroActual.getRegionHeight();
+        altoJugador = cuadroActual.getRegionHeight();
 
 
     }
@@ -258,6 +271,8 @@ public class MiJuego extends ApplicationAdapter implements InputProcessor {
     }
 
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
+        System.out.println(button);
+
         // Vector en tres dimensiones que recoge las coordenadas donde se ha hecho click
         // o toque de la pantalla.
         Vector3 clickCoordinates = new Vector3(screenX, screenY, 0);
@@ -266,9 +281,17 @@ public class MiJuego extends ApplicationAdapter implements InputProcessor {
         // Se pone a cero el atributo que marca el tiempo de ejecución de la animación,
         // provocando que la misma se reinicie.
         stateTime = 0;
+
+
+        //​ Guardamos la posición anterior del jugador por si al desplazarlo se topa
+        //​ con un obstáculo y podamos volverlo a la posición anterior.
+        float jugadorAnteriorX = jugadorX;
+        float jugadorAnteriorY = jugadorY;
+
+
         // Si se ha pulsado por encima de la animación, se sube esta 5 píxeles y se reproduce la
         // animación del jugador desplazándose hacia arriba.
-        if (jugadorY < posicion.y - 48) {
+        if ((jugadorY+altoJugador) < posicion.y) {
             jugadorY += 5;
             jugador = jugadorArriba;
         // Si se ha pulsado por debajo de la animación, se baja esta 5 píxeles y se reproduce
@@ -279,15 +302,29 @@ public class MiJuego extends ApplicationAdapter implements InputProcessor {
         }
         // Si se ha pulsado a la derecha de la animación, se mueve esta 5 píxeles a la derecha y
         // se reproduce la animación del jugador desplazándose hacia la derecha.
-        if (jugadorX < posicion.x - 48) {
+        if ((jugadorX+anchoJugador/2) < posicion.x) {
             jugadorX += 5;
             jugador = jugadorDerecha;
         // Si se ha pulsado a la izquierda de la animación, se mueve esta 5 píxeles a la
         // izquierda y se reproduce la animación del jugador desplazándose hacia la izquierda.
-        } else if (jugadorX > posicion.x) {
+        } else if ((jugadorX-anchoJugador/2) > posicion.x) {
             jugadorX -= 5;
             jugador = jugadorIzquierda;
         }
+
+
+        //Comprobar la colision con el obstaculo
+        //Al chocar con un obstáculo el jugador vuelve a su posición inicial
+        if ((obstaculo[(int) ((jugadorX + anchoJugador/4) / anchoCelda)][((int) (jugadorY)
+                / altoCelda)])
+                || (obstaculo[(int) ((jugadorX + 3*anchoJugador/4) / anchoCelda)][((int)
+                (jugadorY) / altoCelda)])) {
+            jugadorX = jugadorAnteriorX;
+            jugadorY = jugadorAnteriorY;
+        }
+
+
+
         return true;
     }
 
