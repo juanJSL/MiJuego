@@ -1,9 +1,12 @@
 package com.pmdm.migame;
 
 import com.badlogic.gdx.ApplicationAdapter;
+import com.badlogic.gdx.Audio;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
+import com.badlogic.gdx.audio.Music;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
@@ -19,8 +22,6 @@ import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector3;
-
-import java.awt.Button;
 
 import static com.badlogic.gdx.math.MathUtils.clamp;
 
@@ -90,10 +91,16 @@ public class MiJuego extends ApplicationAdapter implements InputProcessor {
     //Posición final Y de cada uno de los NPC
     private float[] destinoY;
     //Número de NPC que van a aparecer en el juego
-    private static final int numeroNPCs = 20;
+    private static final int numeroNPCs = 10;
     // Este atributo indica el tiempo en segundos transcurridos desde que se inicia la animación
     // de los NPC , servirá para determinar cual es el frame que se debe representar.
     private float stateTimeNPC;
+
+
+    //Atributo para la musica del juego
+    Music audio;
+    Sound audioColision;
+    Sound pasos;
 
 
     @Override
@@ -131,8 +138,8 @@ public class MiJuego extends ApplicationAdapter implements InputProcessor {
         jugador = jugadorArriba;
 
         //Indicamos la posicion del jugador
-        jugadorX = 0;
-        jugadorY = 0;
+        jugadorX = 400;
+        jugadorY = 400;
 
         // Ponemos a cero el atributo stateTime, que marca el tiempo e ejecución de la animación.
         stateTime = 0f;
@@ -244,155 +251,69 @@ public class MiJuego extends ApplicationAdapter implements InputProcessor {
         // de los NPC.
         stateTimeNPC = 0f;
 
+        //Inicio la musica del juego
+        audio = Gdx.audio.newMusic(Gdx.files.internal("Megalovania.mp3"));
+        audio.setLooping(true);
+        audio.play();
+        //Inicio el sonido para la colision con NPC
+        audioColision = Gdx.audio.newSound(Gdx.files.internal("sonidoColision.mp3"));
+        //Inicio el sonido que se ejecuta con los pasos
+        pasos  = Gdx.audio.newSound(Gdx.files.internal("pasos.mp3"));
 
     }
-/*
+
+
+
     @Override
-    public void render() {
-        //Color de fondo
-        Gdx.gl.glClearColor(1, 0, 0, 1);
-        //Borramos la pantalla
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-        //Actualizamos la camara del juego
-        camara.update();
-        //Vinculamos el objeto que dibuja el mapa con la camara
-        mapaRenderer.setView(camara);
-        //Dibujamos el mapa
-        mapaRenderer.render();
-        //Inicializamos el objeto SpriteBatch
-
-
-        // extraemos el tiempo de la última actualización del sprite y la acumulamos stateTime.
-        stateTime += Gdx . graphics . getDeltaTime ();
-        // Extraemos el frame que debe ir asociado al momento actual.
-        cuadroActual = (TextureRegion) jugador. getKeyFrame (stateTime); // 1
-        // le indicamos al SpriteBatch que se muestre en el sistema de coordenadas
-        // específicas de la cámara.
-        sb. setProjectionMatrix (camara. combined );
-        sb.begin();
-        //Pintamos el Sprite con el objeto SpriteBatch
-        sprite.draw(sb);
-        //Finalizamos el SpriteBatch
-        sb.end();
-
-
-    }
-*/
-
-/*RENDER CARGANDO TODAS LAS CAPAS
-    @Override
-    public void render() {
+    public void render () {
         //Ponemos el color del fondo a negro
         Gdx.gl.glClearColor(0, 0, 0, 1);
         //Borramos la pantalla
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         //Trasladamos la cámara para que se centre en el mosquetero.
         camara.position.set(jugadorX, jugadorY, 0f);
-
-
-
-        /*
-        SIGUIENDO AL JUGADOR II
-         /
-
-        //Trasladamos la cámara para que se centre en el mosquetero.
-        camara.position.set(jugadorX, jugadorY, 0f);
         //Comprobamos que la cámara no se salga de los límites del mapa de baldosas,
         //Verificamos, con el método clamp(), que el valor de la posición x de la cámara
-        //esté entre la mitad de la anchura de la vista de la cámara y entre la diferencia entre
+        //esté entre la mitad de la anchura de la vista de la cámara y entre la diferencia  entre
         //la anchura del mapa restando la mitad de la anchura de la vista de la cámara,
-        camara.position.x = MathUtils.clamp(camara.position.x, camara.viewportWidth / 2f, anchoMapa - camara.viewportWidth / 2f);
+        camara.position.x = MathUtils.clamp(camara.position.x, camara.viewportWidth / 2f,
+                anchoMapa - camara.viewportWidth / 2f);
         //Verificamos, con el método clamp(), que el valor de la posición y de la cámara
-        //esté entre la mitad de la altura de la vista de la cámara y entre la diferencia entre
+        //esté entre la mitad de la altura de la vista de la cámara y entre la diferencia  entre
         //la altura del mapa restando la mitad de la altura de la vista de la cámara,
-        camara.position.y = clamp(camara.position.y, camara.viewportHeight / 2f, altoMapa - camara.viewportHeight / 2f);
-
-
+        camara.position.y = MathUtils.clamp(camara.position.y, camara.viewportHeight / 2f,
+                altoMapa - camara.viewportHeight / 2f);
         //Actualizamos la cámara del juego
         camara.update();
         //Vinculamos el objeto de dibuja el TiledMap con la cámara del juego
         mapaRenderer.setView(camara);
-        //Dibujamos el TiledMap
-        mapaRenderer.render();
-        // extraemos el tiempo de la última actualización del sprite y la acumulamos a        stateTime.
-        stateTime += Gdx.graphics.getDeltaTime();
-        // Extraemos el frame que debe ir asociado al momento actual.
-        cuadroActual = (TextureRegion) jugador.getKeyFrame(stateTime); // 1
+        // Dibujamos las tres primeras capas del TiledMap
+        int[] capas = {0,1,2};
+        mapaRenderer.render(capas);
+        // extraemos el tiempo de la última actualización del sprite y la acumulamos a stateTime.
+                stateTime += Gdx.graphics.getDeltaTime();
+        //Extraemos el frame que debe ir asociado a al momento actual.
+        cuadroActual = (TextureRegion) jugador.getKeyFrame(stateTime);
         // le indicamos al SpriteBatch que se muestre en el sistema de coordenadas
         // específicas de la cámara.
         sb.setProjectionMatrix(camara.combined);
-        // Inicializamos el objeto SpriteBatch
+        //Inicializamos el objeto SpriteBatch
         sb.begin();
-        // Pintamos el objeto Sprite a través del objeto SpriteBatch
-        sb.draw(cuadroActual, jugadorX, jugadorY); // 2
-
-        //NPC
-        //Dibujamos las animaciones de los NPC
-        for (int i= 0; i < numeroNPCs; i++) {
-            actualizaNPC (i,0.5f);
-            cuadroActual = (TextureRegion) noJugador[i].getKeyFrame(stateTimeNPC);
-            sb.draw(cuadroActual,noJugadorX[i],noJugadorY[i]);
-        }
-
-
-        // Finalizamos el objeto SpriteBatch
-        sb.end();
-        detectaColisiones();
-    }
-*/
-
-
-    @Override
-    public void render () {
-//Ponemos el color del fondo a negro
-        Gdx.gl.glClearColor(0, 0, 0, 1);
-//Borramos la pantalla
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-//Trasladamos la cámara para que se centre en el mosquetero.
-        camara.position.set(jugadorX, jugadorY, 0f);
-//Comprobamos que la cámara no se salga de los límites del mapa de baldosas,
-//Verificamos, con el método clamp(), que el valor de la posición x de la cámara
-//esté entre la mitad de la anchura de la vista de la cámara y entre la diferencia  entre
-//la anchura del mapa restando la mitad de la anchura de la vista de la cámara,
-        camara.position.x = MathUtils.clamp(camara.position.x, camara.viewportWidth / 2f,
-                anchoMapa - camara.viewportWidth / 2f);
-//Verificamos, con el método clamp(), que el valor de la posición y de la cámara
-//esté entre la mitad de la altura de la vista de la cámara y entre la diferencia  entre
-//la altura del mapa restando la mitad de la altura de la vista de la cámara,
-        camara.position.y = MathUtils.clamp(camara.position.y, camara.viewportHeight / 2f,
-                altoMapa - camara.viewportHeight / 2f);
-//Actualizamos la cámara del juego
-        camara.update();
-//Vinculamos el objeto de dibuja el TiledMap con la cámara del juego
-        mapaRenderer.setView(camara);
-// Dibujamos las tres primeras capas del TiledMap
-        int[] capas = {0,1,2};
-        mapaRenderer.render(capas);
-// extraemos el tiempo de la última actualización del sprite y la acumulamos a stateTime.
-                stateTime += Gdx.graphics.getDeltaTime();
-//Extraemos el frame que debe ir asociado a al momento actual.
-        cuadroActual = (TextureRegion) jugador.getKeyFrame(stateTime);
-// le indicamos al SpriteBatch que se muestre en el sistema de coordenadas
-// específicas de la cámara.
-        sb.setProjectionMatrix(camara.combined);
-//Inicializamos el objeto SpriteBatch
-        sb.begin();
-//Pintamos el objeto Sprite a través del objeto SpriteBatch
+        //Pintamos el objeto Sprite a través del objeto SpriteBatch
         sb.draw(cuadroActual, jugadorX, jugadorY);
-//Dibujamos las animaciones de los NPC
+        //Dibujamos las animaciones de los NPC
         for (int i= 0; i < numeroNPCs; i++) {
             actualizaNPC(i,0.5f);
             cuadroActual = (TextureRegion) noJugador[i].getKeyFrame(stateTime);
             sb.draw(cuadroActual,noJugadorX[i],noJugadorY[i]);
         }
-//Finalizamos el objeto SpriteBatch
+        //Finalizamos el objeto SpriteBatch
         sb.end();
-// Pintamos la cuarta capa del mapa de baldosas.
+        // Pintamos la cuarta capa del mapa de baldosas.
         capas = new int[1];
         capas[0]= 3;
         mapaRenderer.render(capas);
-//Comprobamos si hay o no colisiones entre en jugador y los NPC
-        detectaColisiones();
+
     }
 
 
@@ -412,18 +333,22 @@ public class MiJuego extends ApplicationAdapter implements InputProcessor {
         float jugadorAnteriorY = jugadorY;
         stateTime = 0;
         if (keycode == Input.Keys.LEFT) {
+            pasos.play();
             jugadorX += -5;
             jugador = jugadorIzquierda;
         }
         if (keycode == Input.Keys.RIGHT) {
+            pasos.play();
             jugadorX += 5;
             jugador = jugadorDerecha;
         }
         if (keycode == Input.Keys.UP) {
+            pasos.play();
             jugadorY += 5;
             jugador = jugadorArriba;
         }
         if (keycode == Input.Keys.DOWN) {
+            pasos.play();
             jugadorY += -5;
             jugador = jugadorAbajo;
         }
@@ -438,13 +363,17 @@ public class MiJuego extends ApplicationAdapter implements InputProcessor {
         // al chocar con un obstáculo el jugador vuelve a su posición inicial
         // la parte izquierda de X es "X + 1/4 del ancho del jugador"
         // la parte derecha de X es "X + 3/4 del ancho del jugador"
-        if ((obstaculo[(int) ((jugadorX + anchoJugador / 4) / anchoCelda)][((int) (jugadorY) /
+        if ((jugadorX < 0 || jugadorY<0 ||
+                jugadorX>(anchoMapa - anchoJugador) ||
+                jugadorY>(altoMapa - altoJugador))||
+                (obstaculo[(int) ((jugadorX + anchoJugador / 4) / anchoCelda)][((int) (jugadorY) /
                 altoCelda)])
                 || (obstaculo[(int) ((jugadorX + 3 * anchoJugador / 4) / anchoCelda)][((int)
-                (jugadorY) / altoCelda)])) {
+                (jugadorY) / altoCelda)])||detectaColisiones()) {
             jugadorX = jugadorAnteriorX;
             jugadorY = jugadorAnteriorY;
         }
+
         return false;
 
     }
@@ -458,7 +387,6 @@ public class MiJuego extends ApplicationAdapter implements InputProcessor {
     }
 
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
-        System.out.println(button);
 
         // Vector en tres dimensiones que recoge las coordenadas donde se ha hecho click
         // o toque de la pantalla.
@@ -479,22 +407,26 @@ public class MiJuego extends ApplicationAdapter implements InputProcessor {
         // Si se ha pulsado por encima de la animación, se sube esta 5 píxeles y se reproduce la
         // animación del jugador desplazándose hacia arriba.
         if ((jugadorY + altoJugador) < posicion.y) {
+            pasos.play();
             jugadorY += 5;
             jugador = jugadorArriba;
             // Si se ha pulsado por debajo de la animación, se baja esta 5 píxeles y se reproduce
             // la animación del jugador desplazándose hacia abajo.
         } else if (jugadorY > posicion.y) {
+            pasos.play();
             jugadorY -= 5;
             jugador = jugadorAbajo;
         }
         // Si se ha pulsado a la derecha de la animación, se mueve esta 5 píxeles a la derecha y
         // se reproduce la animación del jugador desplazándose hacia la derecha.
         if ((jugadorX + anchoJugador / 2) < posicion.x) {
+            pasos.play();
             jugadorX += 5;
             jugador = jugadorDerecha;
             // Si se ha pulsado a la izquierda de la animación, se mueve esta 5 píxeles a la
             // izquierda y se reproduce la animación del jugador desplazándose hacia la izquierda.
         } else if ((jugadorX - anchoJugador / 2) > posicion.x) {
+            pasos.play();
             jugadorX -= 5;
             jugador = jugadorIzquierda;
         }
@@ -505,7 +437,7 @@ public class MiJuego extends ApplicationAdapter implements InputProcessor {
         if ((obstaculo[(int) ((jugadorX + anchoJugador / 4) / anchoCelda)][((int) (jugadorY)
                 / altoCelda)])
                 || (obstaculo[(int) ((jugadorX + 3 * anchoJugador / 4) / anchoCelda)][((int)
-                (jugadorY) / altoCelda)])) {
+                (jugadorY) / altoCelda)])||detectaColisiones()) {
             jugadorX = jugadorAnteriorX;
             jugadorY = jugadorAnteriorY;
         }
@@ -553,25 +485,27 @@ public class MiJuego extends ApplicationAdapter implements InputProcessor {
 
 
 
-    private void detectaColisiones () {
-//Vamos a comprobar que el rectángulo que rodea al jugador, no se solape
-//con el rectángulo de alguno de los NPC. Primero calculamos el rectángulo
-//en torno al jugador.
+    private boolean detectaColisiones () {
+        //Vamos a comprobar que el rectángulo que rodea al jugador, no se solape
+        //con el rectángulo de alguno de los NPC. Primero calculamos el rectángulo
+        //en torno al jugador.
         Rectangle rJugador = new Rectangle(jugadorX, jugadorY, anchoJugador, altoJugador);
         Rectangle rNPC;
-//Ahora recorremos el array de NPC, para cada uno generamos su rectángulo envolvente
-//y comprobamos si se solapa o no con el del Jugador.
+        //Ahora recorremos el array de NPC, para cada uno generamos su rectángulo envolvente
+        //y comprobamos si se solapa o no con el del Jugador.
         for (int i = 0; i < numeroNPCs; i++) {
             rNPC = new Rectangle(noJugadorX[i], noJugadorY[i],
                     anchoNoJugador, altoNoJugador);
-//Se comprueba si se solapan.
+        //Se comprueba si se solapan.
             if (rJugador.overlaps(rNPC)) {
-//hacer lo que haya que hacer en este caso, como puede ser reproducir un efecto
-//de sonido, una animación del jugador alternativa y, posiblemente, que este muera
-//y se acabe la partida actual. En principio, en este caso, lo único que se  hace
-//es mostrar un mensaje en la consola de texto.
-                System.out.println("Hay colisión!!!");
+                //Lanzo un sonido
+                audioColision.play();
+
+                //Si hay colision devuelvo true pra que el jugador vuelva a su posicion
+                return  true;
             }
         }
+        //Si no hay colision devuelvo false
+        return false;
     }
 }
